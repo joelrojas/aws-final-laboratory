@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Serverless File Gateway
+
+  Authorized S3 File Uploads and Downloads via pre-signed URLs.
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: python3.11
+    Architectures:
+      - x86_64
+
+Resources:
+  # 1. S3 Bucket for File Storage (Private by default)
+  FileStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "file-gateway-storage-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  # 2. Lambda Function for API Logic
+  FileGatewayFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref FileStorageBucket
+      Policies:
+        # Least Privilege: Only allow Get and Put on this specific bucket
+        - S3ReadPolicy:
+            BucketName: !Ref FileStorageBucket
+        - S3WritePolicy:
+            BucketName: !Ref FileStorageBucket
+      Events:
+        UploadFile:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref FileGatewayApi
+            Path: /files
+            Method: POST
+        DownloadFile:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref FileGatewayApi
+            Path: /files/{key}
+            Method: GET
+
+  # 3. HTTP API (API Gateway V2)
+  FileGatewayApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${FileGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  BucketName:
+    Description: "S3 Bucket Name"
+    Value: !Ref FileStorageBucket
