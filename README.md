@@ -54,7 +54,11 @@ Do **NOT** attach `AdministratorAccess`. Create a policy with only the needed pe
         "iam:CreateRole",
         "iam:DeleteRole",
         "iam:AttachRolePolicy",
-        "iam:DetachRolePolicy"
+        "iam:DetachRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:PutRolePolicy"
       ],
       "Resource": "*"
     }

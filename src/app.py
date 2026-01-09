@@ -19,17 +19,21 @@ def lambda_handler(event, context):
     path_parameters = event.get('pathParameters', {})
 
     try:
-        if http_method == 'POST' and event.get('rawPath') == '/files':
+        if route_key == 'POST /files':
             return handle_upload_request(event)
         
-        elif http_method == 'GET' and path_parameters.get('key'):
+        elif route_key == 'GET /files/{key}':
             object_key = path_parameters.get('key')
             return handle_download_request(object_key)
             
         else:
             return {
                 "statusCode": 404,
-                "body": json.dumps({"message": "Route not found"})
+                "body": json.dumps({
+                    "message": "Route not found",
+                    "receivedRouteKey": route_key,
+                    "receivedPath": event.get("rawPath")
+                })
             }
 
     except Exception as e:
