@@ -2,7 +2,14 @@
 
 A lightweight, serverless file manager that uses **AWS API Gateway**, **Lambda**, and **S3** to securely upload and download files via pre-signed URLs.
 
+## Deliverables
+
+- **Google Document Link**: [Documentation Deliverable](https://docs.google.com/document/d/1ubZ1xzKd1IC5Cq_gNP1PGuYMARLVo68JqrOz77H9plY/edit?usp=sharing)
+  _(This document contains the Architecture Diagram, detailed API explanation, and Proof of Functionality screenshots)_
+
 ## Architecture
+
+![Architecture Diagram](image.png)
 
 1.  **POST /files**: Lambda generates a pre-signed **PUT** URL (valid 15 mins). Client uploads directly to S3.
 2.  **GET /files/{key}**: Lambda generates a pre-signed **GET** URL (valid 1 hour) and returns an **HTTP 307 Temporary Redirect**. Client follows redirect to download from S3.
@@ -108,36 +115,37 @@ Once deployed, you can verify the environment by running the tests:
 
 ## Verification
 
-### 1. Automated Testing (GitHub Actions)
+### 1. Manual Verification (cUrl)
 
-The validation tests are configured to run manually via GitHub Actions.
-
-1.  Navigate to the **Actions** tab in your GitHub repository.
-2.  Select the **Run Tests** workflow from the left sidebar.
-3.  Click the **Run workflow** button.
-4.  Verify that all tests pass (Green checkmark).
-
-### 2. Manual Verification (cUrl)
-
-**Step 1: Get Upload URL**
+**Step 1: Generate Pre-signed URL**
 
 ```bash
-# Returns {"uploadUrl": "...", "objectKey": "..."}
-curl -X POST https://<API_ID>.execute-api.us-east-1.amazonaws.com/prod/files \
-  -d '{"filename": "hello.txt"}'
+ curl --location 'https://<API_ID>.execute-api.us-east-1.amazonaws.com/prod/files' \
+--header 'Content-Type: application/json' \
+--data '{"filename": "image.jpg"}'
 ```
+
+> the response will be: {"uploadUrl": "...", "objectKey": "...", "expiresIn": 900}
 
 **Step 2: Upload File**
 
 ```bash
 # Use the "uploadUrl" from Step 1
-curl -X PUT "<SIGNED_UPLOAD_URL>" --data "Hello serverless world!"
+curl -X PUT -T "<path_to_file>" "<uploadUrl>"
 ```
 
 **Step 3: Download File**
 
 ```bash
-# -L Follows the redirect automatically
-# -v Shows the 307 Redirect and Location header
-curl -L -v https://<API_ID>.execute-api.us-east-1.amazonaws.com/prod/files/hello.txt
+curl -v 'https://<API_ID>.execute-api.us-east-1.amazonaws.com/prod/files/<object_key>'
+or
+curl --location 'https://<API_ID>.execute-api.us-east-1.amazonaws.com/prod/files/<object_key>'
 ```
+
+> Replace `<API_ID>` with your actual API ID (the first part of the URL).
+
+> `<object_key>` is the key of the file you want to download, this is the key that was returned in the response of the upload request.
+
+> You can find the URL of the API Gateway in the Outputs of the CloudFormation stack. The output name is `ApiEndpoint`.
+
+![ApiEndpoint](workflow-output.png)
