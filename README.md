@@ -103,11 +103,6 @@ The deployment is fully automated via GitHub Actions but must be triggered manua
 3.  Click the **Run workflow** button.
 4.  Wait for the implementation to complete (Green checkmark).
 
-Once deployed, you can verify the environment by running the tests:
-
-1.  Select the **Run Tests** workflow from the left sidebar.
-2.  Click **Run workflow**.
-
 **Settings (Configured in Workflow):**
 
 - Stack Name: `signed-url-file-gateway`
